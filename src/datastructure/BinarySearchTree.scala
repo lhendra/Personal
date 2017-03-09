@@ -1,5 +1,6 @@
 package datastructure
 
+import scala.collection.mutable
 
 
 case class Node[T](var value: T, var right: Option[Node[T]], var left: Option[Node[T]], var parent: Option[Node[T]])
@@ -158,6 +159,11 @@ object BinarySearchTree extends App {
   println(bst.traversePreOrder == Some(List(8, 3, 1, 6, 4, 7, 10, 14, 13)))
   println(bst.traversePostOrder == Some(List(1, 4, 7, 6, 3, 13, 14, 10, 8)))
 
+  val iterator = BinarySearchTreeIterator(bst)
+  while (iterator.hasNext()) {
+    println(iterator.next.get.value)
+  }
+
   def isBST(): Boolean = {
 
     def foo(node: Node[Int], minVal: Int, maxVal: Int): Boolean = {
@@ -192,5 +198,43 @@ object BinarySearchTree extends App {
   }
 
   println(isBST)
+
+}
+
+
+case class BinarySearchTreeIterator[T](bst: BinarySearchTree[T])(implicit ordering:Ordering[T]){
+
+  private val stack = mutable.Stack[Node[T]]()
+  if (bst.root.isDefined) {
+    pushCurrentAndLeftBranch(bst.root.get)
+  }
+
+  def hasNext(): Boolean = {
+    stack.nonEmpty
+  }
+
+  def pushCurrentAndLeftBranch(current: Node[T]): Unit = {
+    stack.push(current)
+    current.left match {
+      case None => // stop
+      case Some(leftVal) => pushCurrentAndLeftBranch(leftVal)
+    }
+  }
+
+  def pushRightBranchOnly(current: Node[T]) = {
+    if (current.right.isDefined) {
+      pushCurrentAndLeftBranch(current.right.get)
+    }
+  }
+
+  def next(): Option[Node[T]] = {
+    if (stack.nonEmpty) {
+      val toReturn = stack.pop()
+      pushRightBranchOnly(toReturn)
+      Some(toReturn)
+    } else {
+      None
+    }
+  }
 
 }

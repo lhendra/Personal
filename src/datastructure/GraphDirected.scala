@@ -74,6 +74,65 @@ class GraphDirected[T]() {
     adjMatrix.keysIterator.filter(_.isRoot).foreach(element => df(element.id))
   }
 
+  def findDepthFirstStack(vertexToFind: String) = {
+
+    val visited = new HashSet[String]()
+    val stack = scala.collection.mutable.Stack[String]()
+
+    def getAllAdj(vertexId: String) = {
+      (adjMatrix.get(VertexInfo(vertexId)) orElse (adjMatrix.get(VertexInfo(vertexId, isRoot = false)))).getOrElse(HashSet())
+    }
+
+    def getUnvisitedAdj(vertexId: String): HashSet[String] = {
+      getAllAdj(vertexId).flatMap(item => {
+        if (visited.contains(item)) {
+          None
+        } else {
+          Some(item)
+        }
+      })
+    }
+
+    def ds(vertexId: String): Boolean = {
+      stack.push(vertexId)
+      val adj = getAllAdj(vertexId)
+      if (adj.nonEmpty) {
+        val to = adj.head
+        println(s"Looking at ${vertexId} -> $to")
+        if (to == vertexToFind) {
+          true
+        } else {
+          ds(to)
+        }
+      } else {
+        nextDs
+      }
+    }
+
+    def nextDs(): Boolean = {
+      if (stack.nonEmpty) {
+        val processed = stack.pop
+        visited.add(processed)
+        if (stack.nonEmpty) {
+          val adj = getUnvisitedAdj(stack.top)
+          if (adj.nonEmpty) {
+            ds(adj.head)
+          } else {
+            false
+          }
+        } else {
+          // we are done - can't find anything!
+          false
+        }
+      } else {
+        false
+      }
+    }
+
+    adjMatrix.keysIterator.filter(_.isRoot).foreach(element => ds(element.id))
+
+  }
+
   def breadthFirst() = {
 
     val visited = new HashSet[String]()
@@ -119,6 +178,9 @@ object GraphDirected extends App {
 
   println("Depth First:")
   g.depthFirst
+
+  println("Depth First with Stack: looking for four")
+  g.findDepthFirstStack("four")
 
   println("Breadth First:")
   g.breadthFirst
